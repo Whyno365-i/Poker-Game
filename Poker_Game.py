@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PySide6.QtCore import Qt, QTimer
 import random
 
 def main():
@@ -14,7 +14,6 @@ class Poker(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        #TODO Make Cards on UI
         #TODO start on betting system and chips
 
 
@@ -36,18 +35,34 @@ class Poker(QMainWindow):
 
         self.top_card= 8
 
+        self.open= True
+
         self.button_width= 100
         self.make_cards()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.button_width= self.width()/ 10
-        self.button_height= self.height()/ 17
+        self.button_width= self.width()// 10
+        self.button_height= self.height()// 17
 
         self.fold.setFixedSize(self.button_width, self.button_height)
         self.call.setFixedSize(self.button_width, self.button_height)
         self.check.setFixedSize(self.button_width, self.button_height)
         self.rise.setFixedSize(self.button_width, self.button_height)
+
+        QTimer.singleShot(0, self.update_card_sizes)
+
+    def update_card_sizes(self):
+        backup_height= int(self.height() * .22)
+
+        backup_width= int(backup_height / 1.43)
+
+
+        self.card_1.setFixedSize(backup_width, backup_height)             
+        self.card_2.setFixedSize(backup_width, backup_height)    
+
+
+
 
     def make_cards(self):
         self.player_container= QWidget()
@@ -55,24 +70,15 @@ class Poker(QMainWindow):
         self.player_layout= QHBoxLayout(self.player_container)
 
         self.button_container= QWidget()
-        # self.button_container.setStyleSheet('background: #4dbc29')
         self.button_layout= QGridLayout(self.button_container)
-
-
-
-        #Makes every row 1-10 have 100px
-        for row in range(3):
-            self.button_layout.setRowMinimumHeight(row, 100)
-
-        #Makes every colmun 1-10 have 100px
-        for col in range(3):
-            self.button_layout.setColumnMinimumWidth(col, 100)
+        self.button_layout.setVerticalSpacing(1)
+        self.button_layout.setHorizontalSpacing(1)
 
         self.board_container= QWidget()
         self.board_container.setStyleSheet('background: #000000')
         self.board_layout= QGridLayout(self.board_container)
 
-        #Makes every row 1-10 have 100px
+        #Makes every row 1-5 have 100px
         for row in range(6):
             self.board_layout.setRowMinimumHeight(row, 100)
 
@@ -84,7 +90,7 @@ class Poker(QMainWindow):
         self.opponent_container.setStyleSheet('background: #000000')
         self.opponent_layout= QGridLayout(self.opponent_container)
 
-        #Makes every row 1-10 have 100px
+        #Makes every row 1-5 have 100px
         for row in range(6):
             self.opponent_layout.setRowMinimumHeight(row, 100)
 
@@ -93,7 +99,7 @@ class Poker(QMainWindow):
             self.opponent_layout.setColumnMinimumWidth(col, 100)
 
 
-
+        #Buttons
 
         self.fold= QPushButton('Fold')
         self.fold.setStyleSheet('''
@@ -111,49 +117,59 @@ class Poker(QMainWindow):
         self.call= QPushButton('Call')
         self.call.setStyleSheet('''
             QPushButton {
-                background: #FF0000;
+                background: #008000;
                 border: 2px solid #000000;
                 border-radius: 3px;
             }
 
             QPushButton:hover {
-                background: #FF3333;
+                background: #339933;
             }
 ''')
 
         self.check= QPushButton('Check')
         self.check.setStyleSheet('''
             QPushButton {
-                background: #FF0000;
+                background: #FFD700;
                 border: 2px solid #000000;
                 border-radius: 3px;
             }
 
             QPushButton:hover {
-                background: #FF3333;
+                background: #FFE866;
             }
 ''')
 
         self.rise= QPushButton('Raise') 
         self.rise.setStyleSheet('''
             QPushButton {
-                background: #FF0000;
+                background: #4169E1;
                 border: 2px solid #000000;
                 border-radius: 3px;
             }
 
             QPushButton:hover {
-                background: #FF3333;
+                background: #6787E7;
             }
 ''')
 
+        #Cards
 
-        self.button_layout.addWidget(self.fold, 2, 1)
-        self.button_layout.addWidget(self.call, 3, 1)
-        self.button_layout.addWidget(self.check, 2, 2)
-        self.button_layout.addWidget(self.rise, 3, 2)
+        self.card_1= QPushButton()
 
-        self.player_layout.addStretch(8)
+        self.card_2= QPushButton()
+
+
+
+        self.button_layout.addWidget(self.fold, 2, 1, alignment= Qt.AlignmentFlag.AlignBottom)
+        self.button_layout.addWidget(self.call, 3, 1, alignment= Qt.AlignmentFlag.AlignTop)
+        self.button_layout.addWidget(self.check, 2, 2, alignment= Qt.AlignmentFlag.AlignBottom)
+        self.button_layout.addWidget(self.rise, 3, 2, alignment= Qt.AlignmentFlag.AlignTop)
+
+        self.player_layout.addStretch(6)
+        self.player_layout.addWidget(self.card_1)
+        self.player_layout.addWidget(self.card_2)
+        self.player_layout.addStretch(1)
         self.player_layout.addWidget(self.button_container, alignment= Qt.AlignmentFlag.AlignRight)
         self.player_layout.addStretch(2)
 
