@@ -35,20 +35,45 @@ class Poker(QMainWindow):
 
         self.top_card= 8
 
-        self.open= True
+        self.dealer= True
 
-        self.button_width= 100
+        self.win= False
+
+        self.three_button= False
+
+        self.two_button= False
+
         self.make_cards()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.button_width= self.width()// 10
-        self.button_height= self.height()// 17
 
-        self.fold.setFixedSize(self.button_width, self.button_height)
-        self.call.setFixedSize(self.button_width, self.button_height)
-        self.check.setFixedSize(self.button_width, self.button_height)
-        self.rise.setFixedSize(self.button_width, self.button_height)
+        if self.three_button== True:
+            self.button_width= self.width()// 10
+            self.button_height= self.height()// 17
+
+            self.fold.setFixedSize(self.button_width * 2, self.button_height)
+            self.call.setFixedSize(self.button_width, self.button_height)
+            self.check.setFixedSize(self.button_width, self.button_height)
+            self.rise.setFixedSize(self.button_width, self.button_height)
+
+        elif self.two_button== True:
+            self.button_width= self.width()// 10
+            self.button_height= self.height()// 17
+
+            self.fold.setFixedSize(self.button_width, self.button_height)
+            self.call.setFixedSize(self.button_width, self.button_height)
+            self.check.setFixedSize(self.button_width * 2, self.button_height)
+            self.rise.setFixedSize(self.button_width * 2, self.button_height)
+
+        else:
+            self.button_width= self.width()// 10
+            self.button_height= self.height()// 17
+
+            self.fold.setFixedSize(self.button_width, self.button_height)
+            self.call.setFixedSize(self.button_width, self.button_height)
+            self.check.setFixedSize(self.button_width, self.button_height)
+            self.rise.setFixedSize(self.button_width, self.button_height)
 
         QTimer.singleShot(0, self.update_card_sizes)
 
@@ -204,13 +229,55 @@ class Poker(QMainWindow):
         self.bot.append(self.cards[2])
         self.bot.append(self.cards[4])
 
-        #There will be a step to bet
+        if self.dealer == True:
+            self.dealer_path()
+            self.dealer= False
+
+        else:
+            self.not_dealer_path()
+            self.dealer= True
 
     def board_pass_out(self):
         self.board.append(self.cards[5], self.cards[6], self.cards[7])
 
+    def dealer_path(self):
+        self.three_button= True
+        self.check.hide()
+        
+        self.button_layout.addWidget(self.fold, 2, 1, 1, 2, alignment= Qt.AlignmentFlag.AlignBottom)
 
+        self.fold.clicked.connect(self.end_game)
 
+        self.call.clicked.connect(self.bot_move)
+
+        self.rise.clicked.connect(self.raise_amount)
+
+    def end_game(self):
+        if self.win == True:
+            print('You won')
+
+        else:
+            print('You lost')
+
+    def raise_amount(self):
+        self.bot_react()
+
+    def bot_react(self):
+        print('j')
+
+    def bot_move(self):
+        print('h')
+
+    def not_dealer_path(self):
+        self.two_button= True
+        self.fold.hide()
+        self.call.hide()
+
+        #Function has not been created yet. Look over notes when it is created
+        # self.check.clicked.connect()
+
+        #Function has not been created yet. Look over notes when it is created
+        # self.rise.clicked.connect()
 
 if __name__ == '__main__':
     main()
