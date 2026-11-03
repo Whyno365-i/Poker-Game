@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPushButton, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QResizeEvent
 import random
 
 def main():
@@ -16,14 +17,13 @@ class Poker(QMainWindow):
 
         #TODO start on betting system and chips
 
-
         self.setWindowTitle('Poker Game')
 
-        self.centralWidget= QWidget()
-        self.centralWidget.setStyleSheet('background: #35654D;')
-        self.setCentralWidget(self.centralWidget)
+        self.main_container= QWidget()
+        self.main_container.setStyleSheet('background: #35654D;')
+        self.setCentralWidget(self.main_container)
 
-        self.main_layout= QVBoxLayout(self.centralWidget)
+        self.main_layout= QVBoxLayout(self.main_container)
 
         self.setMinimumSize(700, 500)
 
@@ -42,6 +42,10 @@ class Poker(QMainWindow):
         self.three_button= False
 
         self.two_button= False
+
+        self.action_weights= {}
+
+        self.card_shown=0
 
         self.make_cards()
 
@@ -202,8 +206,9 @@ class Poker(QMainWindow):
         self.main_layout.addWidget(self.board_container)
         self.main_layout.addWidget(self.player_container)
 
+        #11 is Jack, 12 is Queen, 13 is King, 14 is Ace
 
-        card_num= {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'Jack': 11, 'Queen': 12, 'King': 13, 'Ace': 14}
+        card_num= {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, '11': 11, '12': 12, '13': 13, '14': 14}
 
         card_suit= ['Hearts', 'Diamonds', 'Clubs', 'Spades']
 
@@ -229,6 +234,8 @@ class Poker(QMainWindow):
         self.bot.append(self.cards[2])
         self.bot.append(self.cards[4])
 
+        print(self.bot)
+
         if self.dealer == True:
             self.dealer_path()
             self.dealer= False
@@ -238,7 +245,16 @@ class Poker(QMainWindow):
             self.dealer= True
 
     def board_pass_out(self):
-        self.board.append(self.cards[5], self.cards[6], self.cards[7])
+        if self.card_shown == 0:
+            self.board.extend([self.cards[5], self.cards[6], self.cards[7]])
+            self.card_shown+= 1
+
+        elif self.card_shown == 1:
+            self.board.append(self.cards[8])
+            self.card_shown+= 1
+
+        else:
+            self.board.append(self.cards[8])
 
     def dealer_path(self):
         self.three_button= True
@@ -248,7 +264,7 @@ class Poker(QMainWindow):
 
         self.fold.clicked.connect(self.end_game)
 
-        self.call.clicked.connect(self.bot_move)
+        self.call.clicked.connect(self.bot_move_1)
 
         self.rise.clicked.connect(self.raise_amount)
 
@@ -265,8 +281,63 @@ class Poker(QMainWindow):
     def bot_react(self):
         print('j')
 
-    def bot_move(self):
-        print('h')
+    def bot_move_1(self):
+        if self.bot[0][0] == self.bot[1][0]:
+            if int(self.bot[0][0]) >= 8:
+                self.action_weights= {'check': .75, 'raise': .25}
+
+            elif  4 <= int(self.bot[0][0]):
+                self.action_weights= {'check': .75, 'raise': .25}
+
+            else:
+                self.action_weights= {'check': .90, 'raise': .10}
+
+        elif self.bot[0][1] == self.bot[1][1]:
+            self.action_weights= {'check': .90, 'raise': .10}
+
+        else:
+            if self.bot[0][0] > self.bot[1][0]:
+                based_on= self.bot[0][0]
+
+            else:
+                based_on= self.bot[1][0]
+
+            if based_on >= 10:
+                self.action_weights= {'check': .85, 'raise': .15}
+
+            elif  7<= based_on:
+                self.action_weights= {'check': .90, 'raise': .10}
+
+            else:
+                self.action_weights= {'check': .95, 'raise': .5}
+
+        self.bot_response_1= random.choices(list(self.action_weights.keys()), weights= self.action_weights.values())
+
+        print(self.bot_response_1)
+
+        if self.bot_response_1 == ['check']:
+            self.dealer_loop()
+
+        else:
+            #TODO continue the raise path
+            pass
+
+
+    def dealer_loop(self):
+        self.board_pass_out()
+        self.check.show()
+        self.fold.hide()
+        self.call.hide()
+        self.two_button= True    
+        self.three_button= False
+        self.resizeEvent(QResizeEvent(self.size(), self.size()))
+
+        self.check.clicked.connect(self.bot_move_2)       
+
+
+    def bot_move_2(self):
+        #TODO Finish this pathway
+        pass
 
     def not_dealer_path(self):
         self.two_button= True
