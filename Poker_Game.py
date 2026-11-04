@@ -43,9 +43,13 @@ class Poker(QMainWindow):
 
         self.two_button= False
 
-        self.action_weights= {}
+        self.equal_num= False
 
-        self.card_shown=0
+        self.equal_suit= False
+
+        self.action_weights= {'call': 1, 'raise': 0}
+
+        self.card_shown=4
 
         self.make_cards()
 
@@ -220,7 +224,7 @@ class Poker(QMainWindow):
             for i in range(len(card_num)):
                 self.order_cards.append((list(card_num)[i], card_suit[suit_x]))
 
-                if list(card_num)[i] == 'Ace':
+                if list(card_num)[i] == '14':
                     suit_x+=1
 
         self.cards= random.sample(self.order_cards, len(self.order_cards))
@@ -245,16 +249,18 @@ class Poker(QMainWindow):
             self.dealer= True
 
     def board_pass_out(self):
-        if self.card_shown == 0:
+        if self.card_shown == 4:
             self.board.extend([self.cards[5], self.cards[6], self.cards[7]])
             self.card_shown+= 1
 
-        elif self.card_shown == 1:
+        elif self.card_shown == 5:
             self.board.append(self.cards[8])
             self.card_shown+= 1
 
         else:
             self.board.append(self.cards[8])
+
+        print(self.board)
 
     def dealer_path(self):
         self.three_button= True
@@ -284,38 +290,52 @@ class Poker(QMainWindow):
     def bot_move_1(self):
         if self.bot[0][0] == self.bot[1][0]:
             if int(self.bot[0][0]) >= 8:
-                self.action_weights= {'check': .75, 'raise': .25}
+                if list(self.action_weights.values())[1] < .25:
+                    self.action_weights= {'check': .75, 'raise': .25}
 
             elif  4 <= int(self.bot[0][0]):
-                self.action_weights= {'check': .75, 'raise': .25}
+                if list(self.action_weights.values())[1] < .25:
+                    self.action_weights= {'check': .75, 'raise': .25}
 
             else:
-                self.action_weights= {'check': .90, 'raise': .10}
+                if list(self.action_weights.values())[1] < .10:
+                    self.action_weights= {'check': .90, 'raise': .10}
 
-        elif self.bot[0][1] == self.bot[1][1]:
-            self.action_weights= {'check': .90, 'raise': .10}
+            self.equal_num= True
 
         else:
             if self.bot[0][0] > self.bot[1][0]:
-                based_on= self.bot[0][0]
+                based_on= int(self.bot[0][0])
 
             else:
-                based_on= self.bot[1][0]
+                based_on= int(self.bot[1][0])
 
             if based_on >= 10:
-                self.action_weights= {'check': .85, 'raise': .15}
+                if list(self.action_weights.values())[1] < .15:
+                    self.action_weights= {'check': .85, 'raise': .15}
 
             elif  7<= based_on:
-                self.action_weights= {'check': .90, 'raise': .10}
+                if list(self.action_weights.values())[1] < .10:                
+                    self.action_weights= {'check': .90, 'raise': .10}
 
             else:
-                self.action_weights= {'check': .95, 'raise': .5}
+                if list(self.action_weights.values())[1] < .05:
+                    self.action_weights= {'check': .95, 'raise': .05}
+
+
+        if self.bot[0][1] == self.bot[1][1]:
+            if list(self.action_weights.values())[1] < .10:
+                self.action_weights= {'check': .90, 'raise': .10}
+
+            self.equal_suit= True
+
 
         self.bot_response_1= random.choices(list(self.action_weights.keys()), weights= self.action_weights.values())
 
         print(self.bot_response_1)
 
         if self.bot_response_1 == ['check']:
+            self.check.clicked.connect(self.bot_move_2)  
             self.dealer_loop()
 
         else:
@@ -331,12 +351,55 @@ class Poker(QMainWindow):
         self.two_button= True    
         self.three_button= False
         self.resizeEvent(QResizeEvent(self.size(), self.size()))
-
-        self.check.clicked.connect(self.bot_move_2)       
+     
 
 
     def bot_move_2(self):
-        #TODO Finish this pathway
+        if self.equal_suit:
+            if self.board[0][1] == self.bot[0][1] or self.board[1][1] == self.bot[0][1] or self.board[2][1] == self.bot[0][1]:
+                if list(self.action_weights.values())[1] < .20:
+                    self.action_weights= {'check': .80, 'raise': .20}
+
+            else:
+                if list(self.action_weights.values())[1] < .05:
+                    self.action_weights= {'check': .95, 'raise': .05}
+
+        if self.equal_num:
+            if self.board[0][0] == self.bot[0][0] or self.board[1][0] == self.bot[0][0] or self.board[2][0] == self.bot[0][0]:
+                if list(self.action_weights.values())[1] < .30:
+                    self.action_weights= {'check': .70, 'raise': .30}
+          
+            else:
+                if list(self.action_weights.values())[1] < .05:
+                    self.action_weights= {'check': .95, 'raise': .05}
+
+        if not self.equal_num and not self.equal_suit:
+            if (self.board[0][0] == self.bot[0][0] or self.board[1][0] == self.bot[0][0] or self.board[2][0] == self.bot[0][0]) or (self.board[0][0] == self.bot[1][0] or self.board[1][0] == self.bot[1][0] or self.board[2][0] == self.bot[1][0]):
+                if list(self.action_weights.values())[1] < .20:
+                    self.action_weights= {'check': .80, 'raise': .20}
+
+            else:
+                if list(self.action_weights.values())[1] < .05:
+                    self.action_weights= {'check': .95, 'raise': .05}
+
+        self.bot_response_2= random.choices(list(self.action_weights.keys()), weights= self.action_weights.values()) 
+
+        print(self.bot_response_2)
+
+        print(self.action_weights)
+
+        if self.bot_response_2== ['check']:
+            self.check.clicked.disconnect(self.bot_move_2)
+            self.check.clicked.connect(self.bot_loop)
+            self.dealer_loop()
+
+        else:
+            #Raise path
+            pass
+
+
+    def bot_loop(self):
+        #TODO Finish Pathway
         pass
 
     def not_dealer_path(self):
