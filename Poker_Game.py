@@ -47,6 +47,14 @@ class Poker(QMainWindow):
 
         self.equal_suit= False
 
+        self.equal_num_2= False
+
+        self.equal_suit_2= False
+
+        self.raise_path= False
+
+        self.beginning= True
+
         self.action_weights= {'check': 1, 'raise': 0}
 
         self.card_shown=4
@@ -330,11 +338,13 @@ class Poker(QMainWindow):
 
         print(self.bot_response_1)
 
-        if self.bot_response_1 == ['check']:
+        if self.bot_response_1 == ['check'] and self.raise_path == False:
             self.check.clicked.connect(self.bot_loop)  
             self.dealer_loop()
 
-
+        if self.bot_response_1 == ['raise']:
+            #Do the math of adding
+            pass
 
     def dealer_loop(self):
         self.board_pass_out()
@@ -343,6 +353,7 @@ class Poker(QMainWindow):
         self.call.hide()
         self.two_button= True    
         self.three_button= False
+        self.beginning= False
         self.resizeEvent(QResizeEvent(self.size(), self.size()))
 
     def bot_loop(self):
@@ -481,30 +492,32 @@ class Poker(QMainWindow):
         if self.bot_response_2== ['check']:
             self.dealer_loop()
 
-        else:
-            #Raise path
-            pass
 
     def raise_amount(self):
         #This is were he math of the amount add will be done
-        self.bot_react_1()
+
+        if self.beginning:
+            self.bot_react_1()
+
+        else:
+            self.bot_react_2()
 
     def bot_react_1(self):
         self.action_weights= {'call': 1, 'raise': 0, 'fold': 0}
 
         if self.bot[0][0] == self.bot[1][0]:
-            self.equal_num= True
+            self.equal_num_2= True
 
         if self.bot[0][1] == self.bot[1][1]:
-            self.equal_suit= True
+            self.equal_suit_2= True
 
-        if self.equal_num == True:
+        if self.equal_num_2 == True:
             self.action_weights= {'call': .55, 'raise': .4, 'fold': .05}
 
-        if self.equal_suit == True:
+        if self.equal_suit_2 == True:
             self.action_weights= {'call': .60, 'raise': .35, 'fold': .05}
 
-        if self.equal_suit == False and self.equal_num == False:
+        if self.equal_suit_2 == False and self.equal_num_2 == False:
             self.action_weights= {'call': .7, 'raise': .2, 'fold': .1}
 
         self.bot_react= random.choices(list(self.action_weights.keys()), weights= self.action_weights.values()) 
@@ -518,7 +531,144 @@ class Poker(QMainWindow):
 
         else:
             print('you win')
+
+    def bot_react_2(self):
+        #TODO double check this something is weird. Probable bug
+        
+        self.action_weights= {'call': 1, 'raise': 0, 'fold': 0}
+
+        suit_num= 0
+
+        amount_num= 0
+
+        card_1_num= 0
+
+        card_2_num= 0
+
+        card_1_suit= 0
+
+        card_2_suit= 0
+ 
+        for i in range(len(self.board)):
+            if self.equal_suit:
+                if self.board[i][1] == self.bot[0][1]:
+                    suit_num+= 1
+                    if list(self.action_weights.values())[1] < .60 and suit_num == 3:
+                        self.action_weights= {'call': .15, 'raise': .80, 'fold': .05}
+
+                    elif list(self.action_weights.values())[1] < .40 and suit_num == 2 and len(self.board) <= 4:
+                           self.action_weights= {'call': .50, 'raise': .40, 'fold': .1}     
+
+                    else:
+                        if list(self.action_weights.values())[1] < .20 and suit_num == 1 and len(self.board) <= 3:
+                            self.action_weights= {'call': .75, 'raise': .15, 'fold': .1 }                        
+
+                else:
+                    if list(self.action_weights.values())[1] < .05:
+                        self.action_weights= {'call': .8, 'raise': .05, 'fold': .15}
+
+            if self.equal_num:
+                if self.board[i][0] == self.bot[0][0]:
+                    amount_num+= 1
+                    if list(self.action_weights.values())[1] < .60 and amount_num == 1:
+                        self.action_weights= {'call': .15, 'raise': .80, 'fold': .05}
+
+                    if list(self.action_weights.values())[1] < .80 and amount_num == 2:
+                        self.action_weights= {'call': .05, 'raise': .95, 'fold': 0}
             
+                else:
+                    if list(self.action_weights.values())[1] < .05:
+                        self.action_weights= {'call': .8, 'raise': .05, 'fold': .15}
+
+            if not self.equal_num:
+                if self.board[i][0] == self.bot[0][0]:
+                    card_1_num+=1
+
+
+                if  self.board[i][0] == self.bot[1][0]:
+                    card_2_num+=1
+
+                if card_1_num > card_2_num:
+                    if list(self.action_weights.values())[1] < .05 and card_1_num== 0:
+                        self.action_weights= {'call': .5, 'raise': .05, 'fold': .45}
+
+                    if list(self.action_weights.values())[1] < .40 and card_1_num == 1:
+                        self.action_weights= {'call': .50, 'raise': .40, 'fold': .1}  
+
+                    if list(self.action_weights.values())[1] < .60 and card_1_num == 2:
+                        self.action_weights= {'call': .15, 'raise': .80, 'fold': .05}
+
+                    if list(self.action_weights.values())[1] < .80 and card_1_num == 3:
+                        self.action_weights= {'call': .05, 'raise': .95, 'fold': 0}
+
+                else:
+
+                    if list(self.action_weights.values())[1] < .05 and card_2_num== 0:
+                        self.action_weights= {'call': .5, 'raise': .05, 'fold': .45}
+
+                    if list(self.action_weights.values())[1] < .40 and card_2_num == 1:
+                        self.action_weights= {'call': .50, 'raise': .40, 'fold': .1}  
+
+                    if list(self.action_weights.values())[1] < .60 and card_2_num == 2:
+                        self.action_weights= {'call': .15, 'raise': .80, 'fold': .05}
+
+                    if list(self.action_weights.values())[1] < .80 and card_2_num == 3:
+                        self.action_weights= {'call': .05, 'raise': .95, 'fold': 0}
+
+            if not self.equal_suit:
+
+                if self.board[i][1] == self.bot[0][0]:
+                    card_1_suit+=1
+
+
+                if  self.board[i][1] == self.bot[1][0]:
+                    card_2_suit+=1
+
+                if card_1_suit > card_2_suit:
+                    if list(self.action_weights.values())[1] < .05 and card_1_suit == 0:
+                        self.action_weights= {'call': .5, 'raise': .05, 'fold': .45}
+
+                    if list(self.action_weights.values())[1] < .40 and card_1_suit == 1:
+                        self.action_weights= {'call': .45, 'raise': .40, 'fold': .15}  
+
+                    if list(self.action_weights.values())[1] < .60 and card_1_suit == 2:
+                        self.action_weights= {'call': .15, 'raise': .75, 'fold': .1}
+
+                    if list(self.action_weights.values())[1] < .80 and card_1_suit == 3:
+                        self.action_weights= {'call': .1, 'raise': .85, 'fold': .05}
+
+                    if list(self.action_weights.values())[1] < .90 and card_1_suit == 4:
+                        self.action_weights= {'call': .05, 'raise': .95, 'fold': 0}
+
+                else:
+
+                    if list(self.action_weights.values())[1] < .05 and card_2_suit == 0:
+                        self.action_weights= {'call': .5, 'raise': .05, 'fold': .45}
+
+                    if list(self.action_weights.values())[1] < .40 and card_2_suit == 1:
+                        self.action_weights= {'call': .45, 'raise': .40, 'fold': .15}  
+
+                    if list(self.action_weights.values())[1] < .60 and card_2_suit == 2:
+                        self.action_weights= {'call': .15, 'raise': .75, 'fold': .1}
+
+                    if list(self.action_weights.values())[1] < .80 and card_2_suit == 3:
+                        self.action_weights= {'call': .1, 'raise': .85, 'fold': .05}
+
+                    if list(self.action_weights.values())[1] < .90 and card_2_suit == 4:
+                        self.action_weights= {'call': .05, 'raise': .95, 'fold': 0}
+
+        self.bot_react= random.choices(list(self.action_weights.keys()), weights= self.action_weights.values()) 
+
+        print(self.bot_react)
+
+        print(self.action_weights)
+
+        if self.bot_react == ['call'] or self.bot_react == ['raise']:
+            self.raise_amount_bot()
+
+        else:
+            print('you win')
+
     def raise_amount_bot(self):
         if self.bot_react == ['raise']:
             if list(self.action_weights.values())[1] <= .3:
@@ -538,8 +688,16 @@ class Poker(QMainWindow):
 
         if self.bot_react == ['call']:
             print('add equal amount to player')
+
+            self.action_weights= {'check': 1, 'raise': 0}
+
+            self.raise_path= True
+
+            self.bot_move_1()
+
             self.check.clicked.connect(self.bot_loop)  
             self.dealer_loop()
+  
 
 
     def not_dealer_path(self):
